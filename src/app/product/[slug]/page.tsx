@@ -1,77 +1,63 @@
-
 'use client'
 
 import { client } from '@/sanity/lib/client'
 import React, { useEffect, useState } from 'react'
 import ProductCard from '@/components/productCard';
 
-
-
 interface IImage {
-    _type:string
-    assets:{
-        _ref:string
-        _type:string
-    }
-  }
-  
-  
-  interface IProducts {
-      name:string
-      price:number
-      discountPercent:number
-      description:string
-      image:IImage
-      slug:{current:string}
-      id:number
-      category:string
-      colors:string[]
-      sizes:string[]
-    
-    }
-  
-  
-
-
-
-const product  = ({params:{slug}}:{params:{slug:string}}) => {
- const [product,setProduct]= useState <IProducts | null >(null);
-
- // for add to cart
- const [cartProduct,serCartProduct] = useState()
-
-useEffect (()=>{
-    const fetchData =async ()=>{
-        const query = `*[_type=='products' && slug.current == "${slug}"] {
-            price,name,image,discountPercent,description,
-                "slug":slug.current
-            }`
-            
-            const data:IProducts[] = await client.fetch(query);
-            console.log(data)
-            if(data.length > 0 ) {
-                setProduct(data[0]);
-            }
-             
+    _type: string;
+    assets: {
+        _ref: string;
+        _type: string;
     };
-    fetchData();
-} , [slug]);
-
-if (!product) {
-    return <div>Loading...</div>;
-}
-  
-  return (
-      <div className='container mx-auto'>
-
-
-          <ProductCard product={product} />
-
-       
-       
-      </div>
-   
-  )
 }
 
-export default product
+interface IProducts {
+    id: number;
+    name: string;
+    price: number;
+    discountPercent: number;
+    description: string;
+    image: IImage;
+    slug: { current: string };
+    category: string;
+    colors: string[];
+    sizes: string[];
+}
+
+const Product = ({ params: { slug } }: { params: { slug: string } }) => {
+    const [product, setProduct] = useState<IProducts | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const query = `*[_type == 'products' && slug.current == $slug][0] {
+                    id, name, price, discountPercent, description, 
+                    image, slug, category, colors, sizes
+                }`;
+
+                const data: IProducts | null = await client.fetch(query, { slug });
+
+                if (data) {
+                    setProduct(data);
+                }
+            } catch (error) {
+                console.error('Error fetching product:', error);
+            }
+        };
+
+        fetchData();
+    }, [slug]);
+
+    if (!product) {
+        return <div className="text-center py-10">Loading...</div>;
+    }
+
+    return (
+        <div className="container mx-auto p-4">
+            <ProductCard product={product} />
+        </div>
+    );
+};
+
+export default Product;
